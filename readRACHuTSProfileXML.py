@@ -170,23 +170,23 @@ def plotProfile(filename, **kwargs):
     Battery_Heater_State = PUdata[:,34]
     Chassis_Heater_State = PUdata[:,35]
     
-    GPSFile = '/Users/kalnajs/Documents/Strateole/Python/Flight/RACHuTS/ST2_C0_03_TTL3_gps.nc'
-    Balloon_GPS = Dataset(GPSFile, mode='r')
-    Ball_lon = Balloon_GPS.variables['lon'][:] - 360.0
-    Ball_lat = Balloon_GPS.variables['lat'][:]
-    Ball_alt = Balloon_GPS.variables['alt'][:]
-    Ball_time = Balloon_GPS.variables['time'][:] + 1569888000 # convert from seconde since 10/1/2019 to POSIX
+    # GPSFile = '/Users/kalnajs/Documents/Strateole/Python/Flight/RACHuTS/ST2_C0_03_TTL3_gps.nc'
+    # Balloon_GPS = Dataset(GPSFile, mode='r')
+    # Ball_lon = Balloon_GPS.variables['lon'][:] - 360.0
+    # Ball_lat = Balloon_GPS.variables['lat'][:]
+    # Ball_alt = Balloon_GPS.variables['alt'][:]
+    # Ball_time = Balloon_GPS.variables['time'][:] + 1569888000 # convert from seconde since 10/1/2019 to POSIX
     
-    start = find_nearest(Ball_time, time[0])
-    end = find_nearest(Ball_time, time[-1])
+    # start = find_nearest(Ball_time, time[0])
+    # end = find_nearest(Ball_time, time[-1])
     
-    Ball_time= Ball_time[start:end]
-    Ball_lon = np.interp(time, Ball_time, Ball_lon[start:end])
-    Ball_lat = np.interp(time, Ball_time, Ball_lat[start:end])
-    Ball_alt = np.interp(time, Ball_time, Ball_alt[start:end])
+    # Ball_time= Ball_time[start:end]
+    # Ball_lon = np.interp(time, Ball_time, Ball_lon[start:end])
+    # Ball_lat = np.interp(time, Ball_time, Ball_lat[start:end])
+    # Ball_alt = np.interp(time, Ball_time, Ball_alt[start:end])
 
     
-    print(Ball_lon)
+    # print(Ball_lon)
 
     
     min_alt = np.argmin(alt)
@@ -406,7 +406,7 @@ def plotProfile(filename, **kwargs):
         plt.savefig(path + '/' + folder + '_HK.png')
            
 
-def parseFirstProfileDatatoCSV(InputFile):    
+def parseProfileDatatoCSV(InputFile):    
     
     OutFile = os.path.splitext(InputFile)[0] + '.csv'
     with open(InputFile, "rb") as binary_file:
@@ -568,8 +568,8 @@ def main():
     
     Path = '/Users/kalnajs/Documents/Strateole/Python/2021/RACHuTS/Test_profile/'
     InputFile = TMAppend(Path)
-    CSVFile = parseFirstProfileDatatoCSV(InputFile)
-    #plotProfile(CSVFile,vsAlt=True, HK=True, GPS=True)
+    CSVFile = parseProfileDatatoCSV(InputFile)
+    plotProfile(CSVFile,vsTime=True, HK=True)
     
 if __name__ == "__main__": 
   # calling main function 

@@ -21,6 +21,7 @@ import csv
 import os
 import glob
 import pysftp
+from shutil import copyfile
 import gzip
 
 
@@ -31,10 +32,11 @@ import gzip
 default_local_target_dir="RACHuTS/TMs/" # directory where to store mirrored data on your local machine
 Output_dir = "RACHuTS/"
 csv_dir = "csv/" # dir where to put processesed csv files 
+profile_dir = "profile/"
 log_file_suffix = "_RACHuTS_Log.txt" #file to save log of XML messages
 ccmz_url="sshstr2.ipsl.polytechnique.fr" # CCMz URL from where to download data
-ccmz_user="lkalnajs" # Your login on the CCMz
-ccmz_pass="Xm<]5D7j" # Your password on the CCMz
+ccmz_user="XXXXXXXX" # Your login on the CCMz
+ccmz_pass="XXXXXXXX" # Your password on the CCMz
 # ID of flights with RACHuTS in 2021 campaign
 my_flights=['ST2_C1_04_TTL3','ST2_C1_09_TTL2','ST2_C1_19_TTL3'] #All the flights with RACHuTS
 
@@ -130,25 +132,27 @@ def loop_over_flights_and_instruments():
                     print('Creating Directory: ' + Output_dir + csv_dir + flight + '/')
                     os.makedirs(Output_dir + csv_dir + flight + '/')
                 for file in new_files:
+                    profile_number = -1
                     if file.endswith('.gz'):
                         path = os.path.dirname(file)
                         filename = os.path.basename(file)
                     
                     if 'RACHUTS' == instrument:
                         InputFile = path + '/' + filename
-                        #print('Input Filename: ' + InputFile)
+                        
                         try:
-                            readHeader(InputFile, Output_dir + flight + log_file_suffix)
+                            #read the ascii header from the TM and update the log file
+                            profile_number = readHeader(InputFile, Output_dir + flight + log_file_suffix)
+                            if profile_number != -1:
+                                #if the TM is a profile then create a sub_dir and make a copy of the file there for later processing
+                                if os.path.exists(Output_dir + flight + '/' + profile_dir) == False:
+                                    print('Creating Profile Directory: ' + Output_dir + flight + '/' + profile_dir)
+                                    os.makedirs(Output_dir + flight + '/' + profile_dir)
+                                    copyfile(InputFile,Output_dir + flight + '/' + profile_dir+'/' +filename)            
+        
                         except:
                             print("Unable to read header from: " + os.path.basename(file))
-                        try:
-                            #OutputFile = LPC_csv_dir + os.path.splitext(os.path.basename(file))[0]
-                            #OutputFile = os.path.splitext(OutputFile)[0] + '.csv'
-                            #print('Processing to: ' + OutputFile)
-                            #csvFile = parseLCPdatatoCSV(InputFile,OutputFile)
-                            #plotLPC(csvFile)
-                        except:
-                            print('Unable to Process Data From: ' + os.path.basename(file) )
+                        
                 
                 
                 #master_csv(LPC_csv_dir + "*.csv",mean_file_name,master_file_name)
@@ -162,6 +166,8 @@ def readHeader(InputFile,logFile):
             csvwriter = csv.writer(csvfile)
             Header = ['MsgID','date','time','message_type','BinLength','XMLMsg','profile_num','profile_segment','reel_pos','pu_current','pu_battery_v','pu_battery_t','pu_time','initial_lat', 'initial_lon','initial_alt','filename']
             csvwriter.writerow(Header)
+    
+    return_value = -1 
     
     with open(InputFile, "rb") as binary_file:
         data = binary_file.read()
@@ -200,7 +206,8 @@ def readHeader(InputFile,logFile):
         pu_battery_v = ""                   #no profiler battery voltage in this message
         pu_battery_t = ""                   #no profiler battery temperature in this message
         csvLine = [MsgID,date,time,message_type,BinLength,XMLMsg,profile_num,profile_segment,reel_pos,pu_current,pu_battery_v,pu_battery_t,pu_time,initial_lat, initial_lon,initial_alt,filename]
-    
+        return_value = profile_num
+        
     elif XMLMsg.startswith('PU LoRa TM:'):  #This is a Profiler TM transmitted via LoRa
         #PU LoRa TM: 17.4, -4589.5, -2.8745, 170.9126, 18367.5
         message_type = 'PU LORA TM'
@@ -273,13 +280,7 @@ def readHeader(InputFile,logFile):
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(csvLine)
     
-    
-#    if os.path.basename(InputFile).startswith('ST2'):
-#        #print(os.path.basename(InputFile))
-#        #print(MsgID + ' ' + XMLMsg)
-#        
-#        with open(logFile, "a") as log:
-#            log.write(os.path.basename(InputFile) + ': ' + MsgID + ' ' + XMLMsg + '\n')                        
+    return return_value          
 
 if __name__ == '__main__':
     #loop_over_flights_and_instruments()
